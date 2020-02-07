@@ -1,5 +1,7 @@
 import * as Yup from 'yup';
-import { parseISO, addMonths, isBefore } from 'date-fns';
+import { parseISO, addMonths, isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
+import Mail from '../../lib/Mail';
 import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
 import Plan from '../models/Plan';
@@ -76,6 +78,25 @@ class EnrollmentController {
       start_date,
       end_date,
       price: priceEnrollment,
+    });
+
+    const student = await Student.findByPk(student_id);
+
+    await Mail.sendMail({
+      to: `${student.name} <${student.email}>`,
+      subject: 'Matrícula Confirmada',
+      template: 'enrollment',
+      context: {
+        name: student.name,
+        plan: `${plan.title} (${plan.duration} meses)`,
+        start_dade: format(enrollment.start_date, "dd'/'MM'/'yyyy", {
+          locale: pt,
+        }),
+        end_date: format(end_date, "dd'/'MM'/'yyyy", {
+          locale: pt,
+        }),
+        price_calculed: `R$ ${priceEnrollment}`,
+      },
     });
 
     return res.json(enrollment);
