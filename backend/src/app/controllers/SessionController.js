@@ -4,30 +4,32 @@ import * as Yup from 'yup';
 import User from '../models/User';
 import auth from '../../config/auth';
 
-class SessionController{
-  async store(req, res){
+class SessionController {
+  async store(req, res) {
     const schema = Yup.object().shape({
-      email: Yup.string().required().email(),
+      email: Yup.string()
+        .required()
+        .email(),
       password: Yup.string().required(),
     });
 
-    if(!(await schema.isValid(req.body))){
-      return res.status(400).json({ error: 'Informe o login e a senha'});
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Informe o login e a senha' });
     }
 
-    const {email, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email }});
+    const user = await User.findOne({ where: { email } });
 
-    if(!user){
-      return res.status(401).json({ error: 'Usuário não encontrado'});
+    if (!user) {
+      return res.status(401).json({ error: 'Usuário não encontrado' });
     }
 
-    if(!(await user.checkPassword(password))){
-      return res.status(401).json({ error: 'Senha incorreta'});
+    if (!(await user.checkPassword(password))) {
+      return res.status(401).json({ error: 'Senha incorreta' });
     }
 
-    const {id , name} = user;
+    const { id, name } = user;
 
     return res.json({
       user: {
@@ -43,4 +45,3 @@ class SessionController{
 }
 
 export default new SessionController();
-

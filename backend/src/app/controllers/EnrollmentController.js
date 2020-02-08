@@ -1,10 +1,11 @@
 import * as Yup from 'yup';
-import { parseISO, addMonths, isBefore, format } from 'date-fns';
-import pt from 'date-fns/locale/pt';
-import Mail from '../../lib/Mail';
+import { parseISO, addMonths, isBefore } from 'date-fns';
 import Enrollment from '../models/Enrollment';
 import Student from '../models/Student';
 import Plan from '../models/Plan';
+
+import EnrollmentMail from '../jobs/EnrollmentMail';
+import Queue from '../../lib/Queue';
 
 class EnrollmentController {
   async index(req, res) {
@@ -82,21 +83,12 @@ class EnrollmentController {
 
     const student = await Student.findByPk(student_id);
 
-    await Mail.sendMail({
-      to: `${student.name} <${student.email}>`,
-      subject: 'Matrícula Confirmada',
-      template: 'enrollment',
-      context: {
-        name: student.name,
-        plan: `${plan.title} (${plan.duration} meses)`,
-        start_dade: format(enrollment.start_date, "dd'/'MM'/'yyyy", {
-          locale: pt,
-        }),
-        end_date: format(end_date, "dd'/'MM'/'yyyy", {
-          locale: pt,
-        }),
-        price_calculed: `R$ ${priceEnrollment}`,
-      },
+    await Queue.add(EnrollmentMail.key, {
+      enrollment,
+      student,
+      plan,
+      end_date,
+      priceEnrollment,
     });
 
     return res.json(enrollment);
