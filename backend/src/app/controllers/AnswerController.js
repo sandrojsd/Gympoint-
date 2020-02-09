@@ -2,8 +2,8 @@ import * as Yup from 'yup';
 import Help_order from '../models/Help_order';
 import Student from '../models/Student';
 
-// import NewAnswerMail from '../jobs/NewAnswerMail';
-// import Queue from '../../lib/Queue';
+import AnswerMail from '../jobs/AnswerMail';
+import Queue from '../../lib/Queue';
 
 class AnswerController {
   async show(req, res) {
@@ -47,11 +47,12 @@ class AnswerController {
 
     await help_order.save();
 
-    // await Queue.add(NewAnswerMail.key, {
-    //   student: help_order.student,
-    //   question: help_order.question,
-    //   answer: help_order.answer,
-    // });
+    const student = Student.findByPk(req.params.id);
+
+    await Queue.add(AnswerMail.key, {
+      student,
+      help_order,
+    });
 
     return res.json(help_order);
   }
